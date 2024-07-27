@@ -1,0 +1,263 @@
+{% extends "base.html" %} {% block title %}Home{% endblock %} 
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aegis</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script src="https://cdn.plot.ly/plotly-2.20.0.min.js" charset="utf-8"></script>
+  <link href="{{url_for('static', filename = 'index.css')}}" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js" integrity="sha512-aMGMvNYu8Ue4G+fHa359jcPb1u+ytAF+P2SCb+PxrjCdO3n3ZTxJ30zuH39rimUggmTwmh2u7wvQsDTHESnmfQ==" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+  <script src="https://cdn.socket.io/4.1.2/socket.io.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+  
+</head>
+</head>
+<body>
+  
+  <div class="container-fluid content mt-5">
+    <div class="row">
+      <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+        <div class="sidebar position-sticky pt-3 sidebar-sticky">
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link active link-danger" aria-current="page" href="#">
+                
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      
+  
+   
+   
+      
+      <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+        
+      
+      
+        <div class="row">
+          <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom border-danger">
+            <img src="{{ url_for('static', filename='images/logo.png') }}"  alt="Logo" class="logo">
+            <h1 class="h2 text-danger mb-0">Gas Leakage and Electrical Load Monitoring</h1>
+            <div class="row"></div>
+          </div>
+        </div>
+
+      
+
+
+        <h1>Gas Leakage </h1>
+
+        <div class="row">
+          <div class="d-flex p-2 justify-content-evenly overview-boxes justify-content-center">
+            <div class="box3 d-flex align-items-center justify-content-center rounded-3 p-1 shadow">
+              <div class="right-side">
+                <div class="box3-topic"></div>
+                
+                <p>Reference Value: <br>
+                  Gas Value  < 0.2 PPM (Normal) <br>
+                  Gas value >= 0.2 PPM (Harmful)</p>
+              </div>
+            </div>
+            </div>
+            </div>
+
+        <div class="row">
+          <div class="d-flex p-2 justify-content-evenly overview-boxes justify-content-center">
+            <div class="box d-flex align-items-center justify-content-center rounded-3 p-1 shadow">
+              <div class="right-side">
+                <div class="box-topic"></div>
+                <p>Real-time Gas Value: <span id="gas_value"></span> PPM</p>
+                
+              </div>
+            </div>
+            <div class="box d-flex align-items-center justify-content-center rounded-3 p-1 shadow">
+              <div class="right-side">
+                <p>LED Status: <span id="led_status">Unknown</span></p>
+                <p>Buzzer Status: <span id="buzzer_status">Unknown</span></p>
+                <p>Solenoid Valve Status: <span id="valve_status">Unknown</span></p>
+    
+                <script>
+                  // Function to update gas value, LED/Buzzer status, and Valve status
+                  function updateGasData() {
+                      $.getJSON('/gas_value', function (data) {
+                          var roundedGasValue = data.gas_value.toFixed(2);
+                          $('#gas_value').text(roundedGasValue,'PPM');
+                      });
+          
+                      $.getJSON('/control', function (data) {
+                          var ledStatus = data.gas_value >= 0.2 ? 'On' : 'Off';
+                          var buzzerStatus = data.gas_value >= 0.2 ? 'On' : 'Off';
+          
+                          $('#led_status').text(ledStatus);
+                          $('#buzzer_status').text(buzzerStatus);
+          
+                          var valveStatus = data.valve_status;
+                          $('#valve_status').text(valveStatus);
+          
+                          // Set the initial state of the LED, buzzer, and valve
+                          $('#led_status').toggleClass('led-on', ledStatus === 'On');
+                          $('#buzzer_status').toggleClass('buzzer-on', buzzerStatus === 'On');
+                          $('#valve_status').toggleClass('valve-shutdown', valveStatus === 'Shutdown');
+                      });
+                      
+                    
+                  }
+          
+                  // Function to trigger the LED, Buzzer, and Valve update manually
+                  $('#updateButton').click(function () {
+                      $.getJSON('/control', function (data) {
+                          var ledStatus = data.gas_value >= 0.2 ? 'On' : 'Off';
+                          var buzzerStatus = data.gas_value >= 0.2 ? 'On' : 'Off';
+          
+                          $('#led_status').text(ledStatus);
+                          $('#buzzer_status').text(buzzerStatus);
+          
+                          var valveStatus = data.valve_status;
+                          $('#valve_status').text(valveStatus);
+          
+                          // Set the state of the LED, buzzer, and valve when manually triggered
+                          $('#led_status').toggleClass('led-on', ledStatus === 'On');
+                          $('#buzzer_status').toggleClass('buzzer-on', buzzerStatus === 'On');
+                          $('#valve_status').toggleClass('valve-shutdown', valveStatus === 'Shutdown');
+                      });
+                  });
+                  
+                      
+                    
+
+                  // Update the data every 1 second
+                  setInterval(updateGasData, 1000);
+              </script>
+
+            </div>
+          </div>
+        </div>
+        
+        
+      </div>
+    </div>
+  </div>
+      
+    
+ 
+ 
+  <div class="container">
+    <div class="hero">
+      <h1>Gas Value </h1>
+      <div class="chart-container">
+        <canvas id="myChart" width="1000" height="600"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <h1>Electrical</h1>
+
+  <div class="row">
+    <div class="d-flex p-2 justify-content-evenly overview-boxes justify-content-center">
+      <div class="box3 d-flex align-items-center justify-content-center rounded-3 p-1 shadow">
+        <div class="right-side">
+          <div class="box3-topic"></div>
+          
+          <p>Reference Value: <br>
+            Current Value  < 0.2 A (Normal) <br>
+            Current value >= 0.2 A (Overload)</p>
+        </div>
+      </div>
+      </div>
+      </div>
+
+  <div class="row">
+    <div class="d-flex p-2 justify-content-evenly overview-boxes justify-content-center">
+      <div class="box2 d-flex align-items-center justify-content-center rounded-3 p-1 shadow">
+        <div class="right-side">
+          <div class="box2-topic"></div>
+          <p>Current Values: <span id="current_value">Waiting for data...</span></p>
+        </div>
+      </div>
+      <div class="box2 d-flex align-items-center justify-content-center rounded-3 p-1 shadow">
+        <div class="right-side">
+          <p>LED Status: <span id="ledb_status">Unknown</span></p>
+          <p>Buzzer Status: <span id="buzzerb_status">Unknown</span></p>
+          <p>Contactor Status: <span id="contactor_status">Unknown</span></p>
+
+
+        <script>
+        function updateElectricalData() {
+    // Fetching current value
+    $.getJSON('/current_value', function(data) {
+        // Updating current value
+        if (data.current_value !== null && data.current_value !== undefined && !isNaN(data.current_value)) {
+            var roundedElectricalValue = parseFloat(data.current_value).toFixed(2);
+            $('#current_value').text(roundedElectricalValue + 'A');
+        } else {
+            $('#current_value').text('Wait for data');
+        }
+    });
+
+    // Fetching LED status
+    $.getJSON('/control_current', function (data) {
+        var ledbStatus = data.ledb_status;
+        $('#ledb_status').text(ledbStatus); // Updating LED status
+
+        var contactorStatus = data.contactor_status;
+        $('#contactor_status').text(contactorStatus);
+
+        var buzzerbStatus= data.buzzerb_status;
+        $('#buzzerb_status').text(buzzerbStatus);
+
+
+
+
+        // Set the initial state of the LED and contactor
+        $('#ledb_status').toggleClass('led-on', ledbStatus === 'On');
+        $('#buzzerb_status').toggleClass('buzzer-on', buzzerbStatus === 'On');
+        $('#contactor_status').toggleClass('contactor-shutdown', contactorStatus === 'Shutdown');
+
+    });
+}
+
+    setInterval(updateElectricalData, 1000);
+
+      
+      </script>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="hero">
+      <h1>Electrical Value </h1>
+      <div class="chart-container">
+        <canvas id="electricalChart" width="1000" height="600"></canvas>
+      </div>
+    </div>
+  </div>
+  
+      <div class="container-fluid"> 
+        <footer class="footer mt-auto py-3 bg-dark">
+          <div class="container text-center">
+            <span class="text-white">&copy; Aegis: An IoT-Based Gas Leakage and Electrical Load Monitoring System</span>
+          </div>
+        </footer>
+      
+      </div>
+
+      
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename = 'index.js') }}"></script>
+</body>
+</html>
+        
+{% endblock %}
